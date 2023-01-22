@@ -10,7 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -24,7 +27,7 @@ public class ProductServiceImpl implements ProductService {
 
         try {
 
-            if (validateNewProduct(requestMap)) {
+            if (validateNewProduct(requestMap, false)) {
 
                 //Product product = getProductFromMap(requestMap, false);
                 productDao.save(getProductFromMap(requestMap, false));
@@ -42,10 +45,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-    private boolean validateNewProduct(Map<String, String> requestMap) {
+    private boolean validateNewProduct(Map<String, String> requestMap, Boolean validateId) {
 
         if (requestMap.containsKey("name") && requestMap.containsKey("price") && requestMap.containsKey("Description")) {
-            return true;
+            if (validateId && requestMap.containsKey("product_id")) {
+                return true;
+            } else if (!validateId) {
+                return true;
+            }
         }
         return false;
 
@@ -66,5 +73,71 @@ public class ProductServiceImpl implements ProductService {
 
 
     }
+
+
+    @Override
+    public ResponseEntity<List<Product>> getAllProduct() {
+
+        try {
+
+            return new ResponseEntity<List<Product>>(productDao.findAll(), HttpStatus.OK);
+
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return new ResponseEntity<List<Product>>(new ArrayList<Product>(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> updateProduct(Map<String, String> requestMap) {
+        try {
+
+            if (validateNewProduct(requestMap,true)) {
+
+                Optional optional = productDao.findById(Integer.parseInt(requestMap.get("product_id")));
+
+                if (!optional.isEmpty()) {
+                    productDao.save(getProductFromMap(requestMap, true));
+
+                    return ProductUtils.getResponseEntity(ProductConstant.DATA_UPDATED, HttpStatus.OK);
+
+                } else {
+                    return ProductUtils.getResponseEntity(ProductConstant.DATA_NOT_FOUND, HttpStatus.BAD_REQUEST);
+                }
+
+            } else {
+                return ProductUtils.getResponseEntity(ProductConstant.INVALID_DATA, HttpStatus.BAD_REQUEST);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+
+        return ProductUtils.getResponseEntity(ProductConstant.SOMETHING_WENT_WRONG_SERVICE_IMPL, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> deleteProduct(int product_id) {
+        try {
+            if(product_id>=0){
+                productDao.deleteById(product_id);
+
+                return ProductUtils.getResponseEntity(ProductConstant.PRODUCT_DELETED, HttpStatus.OK);
+
+            }else{
+                return ProductUtils.getResponseEntity(ProductConstant.INVALID_DATA, HttpStatus.BAD_REQUEST);
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return ProductUtils.getResponseEntity(ProductConstant.SOMETHING_WENT_WRONG_SERVICE_IMPL, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 
 }

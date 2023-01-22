@@ -9,4 +9,10 @@ public class ProductConstant {
     public  static  final  String INVALID_DATA = "Invalid data";
 
     public  static  final  String DATA_INSERTED = "Data Inserted";
+
+    public  static  final  String DATA_UPDATED = "Data Updated";
+
+    public  static  final  String PRODUCT_DELETED = "Product Deleted";
+
+    public  static  final  String DATA_NOT_FOUND = "Data Not Found";
 }
